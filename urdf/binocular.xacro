@@ -1,0 +1,740 @@
+<?xml version="1.0"?>
+
+<robot name="binocular" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Constants for robot dimensions -->
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  <!-- arbitrary value for mass -->
+  <xacro:property name="mass" value="5" /> 
+
+
+
+  <!-- Import all Gazebo-customization elements, including Gazebo colors-->
+  <xacro:include filename="$(find binocular)/urdf/binocular.gazebo" />
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find binocular)/urdf/materials.xacro" />
+
+  <!-- link base parameters  -->
+  <xacro:property name="base_height" value="0.3" />
+  <xacro:property name="base_radius" value="0.5" />
+  <xacro:property name="base_pillar_height" value="0.6" />
+  <xacro:property name="base_pillar_radius" value="0.2" />
+
+  <link name="world"/>
+
+  <joint name="fixed" type="fixed">
+    <parent link="world"/>
+    <child link="link_base"/>
+  </joint>
+
+  <!-- Link Base -->
+  <link name="link_base">
+    <collision>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry>
+		    <cylinder length="${base_height}" radius="${base_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${base_height}" radius="${base_radius}"/>
+      </geometry>
+      <material name="black"/>
+ 	  </visual>
+
+    <collision>
+      <origin xyz="0 0 ${base_height+base_pillar_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${base_pillar_height}" radius="${base_pillar_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 0 ${base_height+base_pillar_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${base_pillar_height}" radius="${base_pillar_radius}"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+
+	  <inertial>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia 
+        ixx="${mass / 12.0 * (3.0*base_radius*base_radius + base_height*base_height)}" ixy="0.0" ixz="0.0"
+        iyy="${mass / 12.0 * (3.0*base_radius*base_radius + base_height*base_height)}" iyz="0.0"
+        izz="${mass / 2.0 * base_radius*base_radius}"/>
+    </inertial>
+  </link>
+
+  <!-- Neck pan -->
+  <joint name="theta1" type="revolute">
+    <parent link="link_base"/>
+    <child link="link_servo0"/>
+    <!-- Tw0 parameters -->
+    <origin xyz="0 0 ${base_height+base_pillar_height}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="${-PI/2.0}" upper="${PI/2}" velocity="5"/>
+    <dynamics damping="0.5"/>
+  </joint>
+
+
+  <!-- link servo0 parameters -->
+  <!--d1 can be set to !servo0_height/2!-->
+  <!--  d1 = 0.1  -->
+  <xacro:property name="servo0_height" value="0.2"/>
+  <xacro:property name="servo0_radius" value="0.2"/>
+  <xacro:property name="d1" value="${servo0_height/2}"/>
+  <xacro:property name="r1" value="0"/>
+  <xacro:property name="servo1_length" value="${2*servo0_radius}"/>
+  <xacro:property name="servo1_radius" value="0.15"/>  
+
+  <!-- Link servo0 -->
+  <link name="link_servo0">
+    <collision>
+      <origin xyz="0 0 ${servo0_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${base_pillar_height}" radius="${base_pillar_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 0 ${servo0_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo0_height}" radius="${servo0_radius}"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+    <!--
+    <collision>
+      <origin xyz="0 ${r1/2} ${servo0_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${servo1_length} ${r1} ${servo0_height}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${r1/2} ${servo0_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${servo1_length} ${r1} ${servo0_height}"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+    -->
+    <collision>
+      <origin xyz="0 ${r1} ${servo0_height/2}" rpy="0 ${PI/2.0} 0"/>
+      <geometry>
+        <cylinder length="${2*servo0_height}" radius="${servo1_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${r1} ${servo0_height/2}" rpy="0 ${PI/2.0} 0"/>
+      <geometry>
+        <cylinder length="${2*servo0_height}" radius="${servo1_radius}"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>      
+
+    <inertial>
+      <origin xyz="0 0 ${servo0_height/2}" rpy="0 0 0"/>
+      <mass value="${mass/5}"/>
+      <inertia
+        ixx="0.15" ixy="0" ixz="0"
+        iyy="0.1" iyz="0"
+        izz="0.2" />
+    </inertial>
+  </link>
+
+
+  <!-- link servo1 parameters -->
+  <xacro:property name="servo1_shaft_radius" value="0.1" />
+  <xacro:property name="servo1_shaft_length" value="0.2" />
+  <xacro:property name="servo1_support_height" value="0.2" />
+  <xacro:property name="servo1_support_width" value="0.1" />
+  <xacro:property name="baselineboard_height" value="0.1"/>
+  <xacro:property name="baselineboard_length" value="1.6"/>
+  <xacro:property name="baselineboard_width" value="0.3"/>
+
+  <!-- Neck tilt -->
+  <joint name="theta2" type="revolute">
+    <parent link="link_servo0"/>
+    <child link="link_servo1_baselineboard"/>
+    <origin xyz="0 ${r1} ${servo0_height/2}" rpy="${-PI/2.0} -0 ${-PI/2.0}"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="0.0" upper="0.0" velocity="0.0"/>
+    <dynamics damping="0.5"/>
+  </joint>
+
+  <link name="link_servo1_baselineboard">
+    <collision>
+      <origin xyz="0 0 ${servo0_radius+servo1_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo1_shaft_length}" radius="${servo1_shaft_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+       <origin xyz="0 0 ${servo0_radius+servo1_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo1_shaft_length}" radius="${servo1_shaft_radius}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 ${-servo0_radius-servo1_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo1_shaft_length}" radius="${servo1_shaft_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+       <origin xyz="0 0 ${-servo0_radius-servo1_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo1_shaft_length}" radius="${servo1_shaft_radius}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>    
+
+    <collision>
+      <origin xyz="0 ${-servo1_support_height/2} ${servo0_radius+servo1_shaft_length-servo1_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo1_shaft_radius} ${servo1_support_height} ${servo1_support_width}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${-servo1_support_height/2} ${servo0_radius+servo1_shaft_length-servo1_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo1_shaft_radius} ${servo1_support_height} ${servo1_support_width}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 ${-servo1_support_height/2} ${-servo0_radius-servo1_shaft_length+servo1_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo1_shaft_radius} ${servo1_support_height} ${servo1_support_width}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${-servo1_support_height/2} ${-servo0_radius-servo1_shaft_length+servo1_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo1_shaft_radius} ${servo1_support_height} ${servo1_support_width}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 ${-servo1_support_height-baselineboard_height/2} 0"/>
+      <geometry>
+        <box size="${baselineboard_width} ${baselineboard_height} ${baselineboard_length}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${-servo1_support_height-baselineboard_height/2} 0"/>
+      <geometry>
+        <box size="${baselineboard_width} ${baselineboard_height} ${baselineboard_length}"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${mass/3}"/>
+      <inertia
+        ixx="0.10" ixy="0" ixz="0"
+        iyy="-0.1" iyz="0"
+        izz="0.2" />
+    </inertial>
+  </link>
+
+  <!-- link servo2 parameters -->
+  <xacro:property name="servo2_offset" value="0.05"/>
+  <xacro:property name="servo2_height" value="0.2" />
+  <xacro:property name="servo2_radius" value="0.1" />
+  <xacro:property name="servo2_bar_length" value="0"/>
+  <xacro:property name="servo2_bar_height" value="${2*servo2_offset}"/>
+  <!-- d2 = 0.7 -->
+  <xacro:property name="d2" value="${baselineboard_length/2-servo2_radius}" />
+  <xacro:property name="r2" value="0" />
+  <!-- d3 = 0.45 -->
+  <xacro:property name="d3" value="${servo1_support_height+baselineboard_height+servo2_height-servo2_offset}"/>
+  <!-- r3 = 0  -->
+  <xacro:property name="r3" value="${servo2_bar_length}"/>
+
+  <!-- left eye pan -->
+  <joint name="theta3" type="revolute">
+    <parent link="link_servo1_baselineboard"/>
+    <child link="link_servo2"/>
+    <origin xyz="${r2} 0 ${-d2}" rpy="${PI/2.0} ${PI} 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="${-PI/2.0}" upper="0" velocity="3"/>
+    <dynamics damping="0.5"/>
+  </joint>
+
+  <link name="link_servo2">
+    <collision>
+      <origin xyz="${r2} 0 ${d3+servo2_offset-servo2_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo2_height}" radius="${servo2_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="${r2} 0 ${d3+servo2_offset-servo2_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo2_height}" radius="${servo2_radius}"/>
+      </geometry>
+    </visual>
+    <!--
+    <collision>
+      <origin xyz="${r3/2} 0 ${d3}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${r3} ${2*servo2_radius} ${servo2_bar_height}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="${r3/2} 0 ${d3}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${r3} ${2*servo2_radius} ${servo2_bar_height}"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+    -->
+    <collision>
+      <origin xyz="${r3} 0 ${d3}" rpy="${-PI/2.0} ${-PI/2.0} 0"/>
+      <geometry>
+        <cylinder length="${2*servo2_radius}" radius="${servo2_radius/1.6}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="${r3} 0 ${d3}" rpy="${-PI/2.0} ${-PI/2.0} 0"/>
+      <geometry>
+        <cylinder length="${2*servo2_radius}" radius="${servo2_radius/1.6}"/>
+      </geometry>
+      <material name="orange"/>
+    </visual> 
+
+    <inertial>
+      <origin xyz="0 0 ${d3+servo2_offset-servo2_height/2}" rpy="0 0 0"/>
+      <mass value="${mass/5}"/>
+      <inertia 
+        ixx="0.01" ixy="0.0" ixz="0.0"
+        iyy="0.01" iyz="0.0"
+        izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!--
+    Link servo3 parameters
+  -->
+  <xacro:property name="servo3_shaft_radius" value="0.05" />
+  <xacro:property name="servo3_shaft_length" value="0.1" />
+  <xacro:property name="servo3_support_height" value="0.1" />
+  <xacro:property name="servo3_support_width" value="0.05" />
+  <xacro:property name="camera_board_height" value="0.05"/>
+  <xacro:property name="camera_board_length" value="0.6"/>
+  <xacro:property name="camera_board_width" value="0.15"/>
+
+  <!-- left eye tilt -->
+  <joint name="theta4" type="revolute">
+    <parent link="link_servo2"/>
+    <child link="link_servo3"/>
+    <origin xyz="${r3} 0 ${d3}" rpy="${PI/2.0} ${PI} 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="${-PI/2.0}" upper="${PI/2.0}" velocity="3"/>
+    <dynamics damping="0.5"/>
+  </joint>
+
+  <link name="link_servo3">
+    <collision>
+      <origin xyz="0 0 ${servo2_radius+servo3_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo3_shaft_length}" radius="${servo3_shaft_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+       <origin xyz="0 0 ${servo2_radius+servo3_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo3_shaft_length}" radius="${servo3_shaft_radius}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 ${-servo2_radius-servo3_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo3_shaft_length}" radius="${servo3_shaft_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+       <origin xyz="0 0 ${-servo2_radius-servo3_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo3_shaft_length}" radius="${servo3_shaft_radius}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>    
+
+    <collision>
+      <origin xyz="0 ${-servo3_support_height/2} ${servo2_radius+servo3_shaft_length-servo3_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo3_shaft_radius} ${servo3_support_height} ${servo3_support_width}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${-servo3_support_height/2} ${servo2_radius+servo3_shaft_length-servo3_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo3_shaft_radius} ${servo3_support_height} ${servo3_support_width}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 ${-servo3_support_height/2} ${-servo2_radius-servo3_shaft_length+servo3_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo3_shaft_radius} ${servo3_support_height} ${servo3_support_width}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${-servo3_support_height/2} ${-servo2_radius-servo3_shaft_length+servo3_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo3_shaft_radius} ${servo3_support_height} ${servo3_support_width}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 ${-servo3_support_height-camera_board_height/2} 0"/>
+      <geometry>
+        <box size="${camera_board_width} ${camera_board_height} ${camera_board_length}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${-servo3_support_height-camera_board_height/2} 0"/>
+      <geometry>
+        <box size="${camera_board_width} ${camera_board_height} ${camera_board_length}"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${mass/10}"/>
+      <inertia
+        ixx="0.010" ixy="0" ixz="0"
+        iyy="-0.01" iyz="0"
+        izz="0.02" />
+    </inertial>
+  </link>
+
+  <!--
+    Link servo4 share parameters with link servo2
+  -->
+  <xacro:property name="r5" value="${r2}" />
+  <xacro:property name="d5" value="${d2}" />
+  <!--
+    Link servo5 share parameters with link servo3
+  -->
+  <xacro:property name="r6" value="${r3}" />
+  <xacro:property name="d6" value="${d3}" />
+
+  <!-- right eye pan -->
+  <joint name="theta6" type="revolute">
+    <parent link="link_servo1_baselineboard"/>
+    <child link="link_servo4"/>
+    <origin xyz="${r5} 0 ${d5}" rpy="${PI/2.0} ${PI} 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="0.0" upper="${PI/2.0}" velocity="3"/>
+    <dynamics damping="0.5"/>
+  </joint>
+
+  <link name="link_servo4">
+    <collision>
+      <origin xyz="${r2} 0 ${d3+servo2_offset-servo2_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo2_height}" radius="${servo2_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="${r2} 0 ${d3+servo2_offset-servo2_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo2_height}" radius="${servo2_radius}"/>
+      </geometry>
+    </visual>
+    <!--
+    <collision>
+      <origin xyz="${r6/2} 0 ${d3}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${r6} ${2*servo2_radius} ${servo2_bar_height}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="${r6/2} 0 ${d3}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${r6} ${2*servo2_radius} ${servo2_bar_height}"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+    -->
+    <collision>
+      <origin xyz="${r6} 0 ${d3}" rpy="${-PI/2.0} ${-PI/2.0} 0"/>
+      <geometry>
+        <cylinder length="${2*servo2_radius}" radius="${servo2_radius/1.6}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="${r6} 0 ${d3}" rpy="${-PI/2.0} ${-PI/2.0} 0"/>
+      <geometry>
+        <cylinder length="${2*servo2_radius}" radius="${servo2_radius/1.6}"/>
+      </geometry>
+      <material name="orange"/>
+    </visual> 
+
+    <inertial>
+      <origin xyz="0 0 ${d3+servo2_offset-servo2_height/2}" rpy="0 0 0"/>
+      <mass value="${mass/5}"/>
+      <inertia 
+        ixx="0.01" ixy="0.0" ixz="0.0"
+        iyy="0.01" iyz="0.0"
+        izz="0.01"/>
+    </inertial>
+  </link>
+
+
+  <!-- right eye tilt -->
+  <joint name="theta7" type="revolute">
+    <parent link="link_servo4"/>
+    <child link="link_servo5"/>
+    <origin xyz="${r3} 0 ${d3}" rpy="${PI/2.0} ${PI} 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="${-PI/2.0}" upper="${PI/2.0}" velocity="3"/>
+    <dynamics damping="0.5"/>
+  </joint>
+
+  <link name="link_servo5">
+    <collision>
+      <origin xyz="0 0 ${servo2_radius+servo3_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo3_shaft_length}" radius="${servo3_shaft_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+       <origin xyz="0 0 ${servo2_radius+servo3_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo3_shaft_length}" radius="${servo3_shaft_radius}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 ${-servo2_radius-servo3_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo3_shaft_length}" radius="${servo3_shaft_radius}"/>
+      </geometry>
+    </collision>
+    <visual>
+       <origin xyz="0 0 ${-servo2_radius-servo3_shaft_length/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${servo3_shaft_length}" radius="${servo3_shaft_radius}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>    
+
+    <collision>
+      <origin xyz="0 ${-servo3_support_height/2} ${servo2_radius+servo3_shaft_length-servo3_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo3_shaft_radius} ${servo3_support_height} ${servo3_support_width}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${-servo3_support_height/2} ${servo2_radius+servo3_shaft_length-servo3_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo3_shaft_radius} ${servo3_support_height} ${servo3_support_width}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 ${-servo3_support_height/2} ${-servo2_radius-servo3_shaft_length+servo3_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo3_shaft_radius} ${servo3_support_height} ${servo3_support_width}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${-servo3_support_height/2} ${-servo2_radius-servo3_shaft_length+servo3_support_width/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${2*servo3_shaft_radius} ${servo3_support_height} ${servo3_support_width}"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 ${-servo3_support_height-camera_board_height/2} 0"/>
+      <geometry>
+        <box size="${camera_board_width} ${camera_board_height} ${camera_board_length}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 ${-servo3_support_height-camera_board_height/2} 0"/>
+      <geometry>
+        <box size="${camera_board_width} ${camera_board_height} ${camera_board_length}"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${mass/10}"/>
+      <inertia
+        ixx="0.010" ixy="0" ixz="0"
+        iyy="-0.01" iyz="0"
+        izz="0.02" />
+    </inertial>
+  </link>
+  
+  <!--
+      Link left camera parameters
+   -->
+  <xacro:property name="camera_size" value="0.1"/>
+  <xacro:property name="camera_left_x_shift" value="0" />
+  <xacro:property name="camera_left_y_shift" value="${-(servo3_support_height+camera_board_height+camera_size/2)}" />
+  <xacro:property name="camera_left_z_shift" value="0" />
+  <xacro:property name="camera_left_roll" value="${PI/2.0}" />
+  <xacro:property name="camera_left_pitch" value="${PI}" />
+  <xacro:property name="camera_left_yaw" value="0" />
+
+
+  <joint name="left_camera_joint" type="fixed">
+    <origin xyz="${camera_left_x_shift} ${camera_left_y_shift} ${camera_left_z_shift}" rpy="${camera_left_roll} ${camera_left_pitch} ${camera_left_yaw}" />
+    <parent link= "link_servo3"/>
+    <child link="left_camera"/>
+    <axis xyz="0 1 0" />
+  </joint>
+
+  <!-- Left Camera -->
+  <link name="left_camera">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${camera_size} ${camera_size} ${camera_size}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+      <!--
+        <mesh filename="package://binocular/config/camera.dae"/>
+        <cylinder length="0.1" radius="0.05"/>
+      -->
+        <box size="${camera_size} ${camera_size} ${camera_size}"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+  <joint name="right_camera_joint" type="fixed">
+    <origin xyz="${camera_left_x_shift} ${camera_left_y_shift} ${camera_left_z_shift}" rpy="${camera_left_roll} ${camera_left_pitch} ${camera_left_yaw}" />
+    <parent link= "link_servo5"/>
+    <child link="right_camera"/>
+    <axis xyz="0 1 0" />
+  </joint>
+
+  <!-- Left Camera -->
+  <link name="right_camera">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${camera_size} ${camera_size} ${camera_size}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+      <!--
+        <mesh filename="package://binocular/config/camera.dae"/>
+        <cylinder length="0.1" radius="0.05"/>
+      -->
+        <box size="${camera_size} ${camera_size} ${camera_size}"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+
+
+  <transmission name="tran01">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="theta1">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor0">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran12">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="theta2">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor1">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran23">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="theta3">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor2">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran3_l">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="theta4">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor3">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran56">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="theta6">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor5">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran6_r">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="theta7">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor6">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  
+</robot>
