@@ -1,0 +1,14 @@
+scripts/__pycache__/
+scripts/.ipynb_checkpoints/
+scripts/parallelstereo/
+scripts/vergencestereo/
+
+config/camera.dae
+config/orb-slam2/
+
+build/
+
+.vscode/
+.idea/
+
+*.pyc

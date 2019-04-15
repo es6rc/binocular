@@ -58,6 +58,15 @@ from IPython.display import Latex
 #	!! Denavit-Hartenberg (DH) Transformations !!
 #
 #	T(n-1)<-n = 
+<<<<<<< HEAD
+#  +-                                  -+     +-       -+
+#  |   ctn       stn       0  |   -rn   |     |     |   |
+#  | -stn*can  ctn*can    san | -dn*san |     |  R  | t |
+#  |    0     -ctn*san    can | -dn*can |  =  |     |   |
+#  | -----------------------+-----------|     |-----+---|
+#  |    0         0        0  |    1    |     |0 0 0| 1 |
+#  +-                                  -+     +-       -+
+=======
 #	+-								 -+	   +-	    -+
 #	| ctn  -stn*can  stn*san | rn*ctn |	   |	 |   |
 #	| stn   ctn*can -ctn*san | rn*stn |	   |  R  | t |
@@ -65,6 +74,7 @@ from IPython.display import Latex
 #	| -----------------------+--------|    |-----+---|
 #	|  0	   0		0	 |   1	  |    |0 0 0| 1 |
 #	+-								 -+    +-		-+
+>>>>>>> 4dbaf65253bb3e71c5b366b09bb3f0ed27a8af79
 # 	ctn = cos(THETAn) can =cos(ALPHAn) stn = sin(THETAn) san = sin(ALPHAn)
 #
 #	T(n-1)->n = 
