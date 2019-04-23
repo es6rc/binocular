@@ -3,10 +3,16 @@ scripts/.ipynb_checkpoints/
 scripts/parallelstereo/
 scripts/vergencestereo/
 
+
+src/talker.cpp
+src/listener.cpp
+
 config/camera.dae
 config/orb-slam2/
 
 build/
+msg/
+srv/
 
 .vscode/
 .idea/

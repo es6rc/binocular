@@ -1,12 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(binocular)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+set( CMAKE_BUILD_TYPE Release )
+set( CMAKE_CXX_FLAGS "-std=c++11 -Wall -O2 -march=native" )
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
+#find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg geometry_msgs)
+
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
@@ -14,47 +13,29 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  genmsg
+  message_generation
 )
-find_package(OpenCV REQUIRED)
+INCLUDE_DIRECTORIES (include ${catkin_INCLUDE_DIRS})
+message("catkin_INCLUDE_DIRS = ${catkin_INCLUDE_DIRS}")
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules )
 
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
 
-################################################
-## Declare ROS messages, services and actions ##
-################################################
+# Find Dependencies
+SET( G2O_ROOT /usr/local/include/g2o )
+find_package( G2O REQUIRED )
 
-## To declare and build messages, services or actions from within this
-## package, follow these steps:
-## * Let MSG_DEP_SET be the set of packages whose message types you use in
-##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
-## * In the file package.xml:
-##   * add a build_depend tag for "message_generation"
-##   * add a build_depend and a exec_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
-##     but can be declared for certainty nonetheless:
-##     * add a exec_depend tag for "message_runtime"
-## * In this file (CMakeLists.txt):
-##   * add "message_generation" and every package in MSG_DEP_SET to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * add "message_runtime" and every package in MSG_DEP_SET to
-##     catkin_package(CATKIN_DEPENDS ...)
-##   * uncomment the add_*_files sections below as needed
-##     and list every .msg/.srv/.action file to be processed
-##   * uncomment the generate_messages entry below
-##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
-
+find_package( OpenCV REQUIRED )
+find_package( Eigen3 REQUIRED )
+find_package( Cholmod )
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  Num.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -71,10 +52,10 @@ find_package(OpenCV REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   sensor_msgs#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  #   std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -105,12 +86,13 @@ find_package(OpenCV REQUIRED)
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES binocular
-#  CATKIN_DEPENDS cv_bridge image_transport opencv3 roscpp rospy sensor_msgs std_msgs
-#  DEPENDS system_lib
-)
+# catkin_package(
+# #  INCLUDE_DIRS include
+# #  LIBRARIES binocular
+# #  CATKIN_DEPENDS cv_bridge image_transport opencv3 roscpp rospy sensor_msgs std_msgs
+# #  DEPENDS system_lib
+# CATKIN_DEPENDS message_runtime
+# )
 
 ###########
 ## Build ##
@@ -119,9 +101,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${G2O_INCLUDE_DIR} 
+  ${EIGEN3_INCLUDE_DIR} 
+  ${CHOLMOD_INCLUDE_DIR}
+  ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -138,21 +124,21 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/binocular_node.cpp)
+add_executable(talker src/talker.cpp)
+target_link_libraries(talker ${catkin_LIBRARIES})
+add_dependencies(talker binocular_generate_messages_cpp)
 
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+add_executable(listener src/listener.cpp)
+target_link_libraries(listener ${catkin_LIBRARIES})
+add_dependencies(listener binocular_generate_messages_cpp)
 
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+add_executable( ba_example src/ba_demo.cpp )
+target_link_libraries( ba_example 
+    ${OpenCV_LIBS}
+    ${G2O_CORE_LIBRARY} ${G2O_STUFF_LIBRARY}
+    g2o_core g2o_types_slam3d g2o_solver_csparse g2o_stuff g2o_csparse_extension g2o_types_sba
+    ${CHOLMOD_LIBRARIES}
+    )
 
 #############
 ## Install ##
@@ -167,20 +153,22 @@ include_directories(
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
-install(PROGRAMS scripts/gaze.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+# install(PROGRAMS scripts/gaze.py
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+# install(DIRECTORY launch
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
-install(DIRECTORY meshes
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+# install(DIRECTORY meshes
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
-install(DIRECTORY urdf
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+# install(DIRECTORY urdf
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
-install(DIRECTORY config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+# install(DIRECTORY config
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(TARGETS ba_example DESTINATION ${CMAKE_BINARY_DIR}/bin)
 
 ## Mark executables and/or libraries for installation
 # install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
