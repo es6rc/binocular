@@ -12,11 +12,6 @@ from std_srvs.srv import Empty
 from ik import *
 
 
-
-# WINDOW_NAME1 = 'righteye tracking'
-# WINDOW_NAME2 = 'lefteye tracking'
-
-
 def trk(args):
     # Track images from two eyes
     ic1 = image_converter('/binocular/righteye/image_raw', True)
@@ -37,40 +32,27 @@ def trk(args):
 
     rospy.init_node('image_converter', anonymous=True)
     rate = rospy.Rate(20) # 10hz
-    #print(detected)   
+
     while not rospy.is_shutdown():    
         v_concat = np.concatenate((ic1.image_track, ic2.image_track), axis=0)
-        #v_size = np.shape(v_concat)
-        #v_concat = cv2.resize(v_concat,(400,480))
         cv2.imshow('TRACKING', v_concat)
-        # cv2.imshow(WINDOW_NAME2, ic2.image_track)
         cv2.waitKey(3)
-
-        #print(pos.x, pos.y, pos.z)
-        #print(ic1.detected, ic2.detected)
         #Pause physics
         try:
             mypause()
             detected = ic1.detected and ic2.detected 
         except Exception, e:
             rospy.logerr('Error on Calling Service: %s', str(e))
-        #try:
+
         if detected:
             model = modelstate('ball','')
             pos = model.pose.position
             q1, q3, q4 = ik(pos.x, pos.y, pos.z)
-            # q's are computed in their cooresponding coordinate frames
-            # q3<0 as left pan coordinate
-            #print(q1, q3, q4)
             #pub0.publish(q1)
-            
             pub2.publish(q3)
             #pub3.publish(q4)
             pub4.publish(-q3)
             #pub5.publish(q4)
-        #except Exception, e:
-        #    rospy.logerr('Error on Calling Service: %s', str(e))
-
         # Resume physics
         try:
             myunpause()
@@ -78,12 +60,7 @@ def trk(args):
             rospy.logerr('Error on Calling Service: %s', str(e))
         
         rate.sleep()
-    '''
-    try:
-        rospy.spin()
-    except KeyboardInterrupt:
-        print("Shutting down")
-    '''
+
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
