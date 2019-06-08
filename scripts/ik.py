@@ -65,9 +65,3 @@ def ik(Xw, Yw, Zw):
     #print(math.degree(q_3))
     return q1, q3, q4 
     #math.degrees(q1), math.degrees(q3), math.degrees(q4)
-
-
-
-
-# print(solvethetas(-1, 7, 1.65))
-
