@@ -3,7 +3,7 @@
 import math
 from sys import exit
 
-
+# The ik fn. is used for specific inverse kinematic for the head-neck sys.
 def ik(Xw, Yw, Zw):
     # if type(Xw)== type(Yw) == type(Zw) == Symbol:
     if Yw == 0:
