@@ -28,8 +28,8 @@ while rval1 and rval2:
         right_pub.publish(bridge.cv2_to_imgmsg(frame2, "bgr8"))
     except CvBridgeError as e:
         print(e)
-    cv2.imshow("left", frame1)
-    cv2.imshow("right", frame2)
+    # cv2.imshow("left", frame1)
+    # cv2.imshow("right", frame2)
     key = cv2.waitKey(10)
     if key == 27:  # exit on ESC
         break
