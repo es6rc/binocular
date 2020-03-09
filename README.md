@@ -1,6 +1,7 @@
 # binocular
 A head-neck robot created from scratch in URDF.
 
+Presentation is [here](https://docs.google.com/presentation/d/1oE1yviLZnIvjhMVwYpUKdL2FHd1_VWj2DQxX9UBLa4Q/edit?usp=sharing)
 ## Visualization
 visualization of the robot in Gazebo
 
